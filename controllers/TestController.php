@@ -14,6 +14,7 @@ class TestController extends Controller
    public function index()
    {
        $model = new TestActiveRecord();
-       var_dump($model->find()->where(['=','id',23])->one());
+       //var_dump($model->findAll([['>','id',2],['<','id',10]],['id','name']));
+       //var_dump($model->findOne([['>','id',2],['<','id',10]],['id','name']));
    }
 }
