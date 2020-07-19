@@ -18,7 +18,7 @@ class PdoDB implements DbInterface
      *
      * @var string
      */
-    protected static  $configClass = Config::class;
+    protected static $configClass = Config::class;
 
     /**
      * Class db
@@ -41,6 +41,7 @@ class PdoDB implements DbInterface
      */
     protected $params = [];
 
+
     /**
      * Connection to database and return it
      *
@@ -55,7 +56,7 @@ class PdoDB implements DbInterface
      * @return $this
      * @throws \Exception
      */
-    public function connection(string $host, int $port,string $user, string $password, string $type, string $database,$options = [])
+    public function connection(string $host, int $port, string $user, string $password, string $type, string $database, $options = [])
     {
         $config = $type . ':' . 'host=' . $host
             . ';port=' . $port
@@ -758,8 +759,26 @@ class PdoDB implements DbInterface
         return $this;
     }
 
-    public function exist()
+    /**
+     * Get table fields
+     *
+     * @param string $tableName table name
+     *
+     * @return array
+     */
+    public function getFieldsName($tableName)
     {
+        $queryString = 'SHOW COLUMNS FROM ' . $tableName ;
+        $query = static::$dbClass->prepare($queryString);
+        $query->execute($this->params);
+        $result = [];
+        $fields = $query->fetchAll();
+        if(!empty($fields)) {
+            foreach ($fields as $raw){
+                $result[] = $raw['Field'];
+            }
+        }
+        return $result;
     }
 
     /**

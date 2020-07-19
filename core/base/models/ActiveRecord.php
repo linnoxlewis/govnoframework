@@ -31,6 +31,14 @@ class ActiveRecord extends Model
     public function __construct()
     {
         $this->db = \App::$service->db;
+        $class = new \ReflectionClass(get_called_class());
+        $entity = $class->newInstance();
+        foreach ($class->getProperties(\ReflectionProperty::IS_PUBLIC) as $prop) {
+            if (isset($object[$prop->getName()])) {
+                $prop->setValue($entity, $object[$prop->getName()]);
+            }
+        }
+        $entity->initialize();
     }
 
     /**
@@ -55,7 +63,7 @@ class ActiveRecord extends Model
      * @return $this
      * @throws \ReflectionException
      */
-    public function find( array $selectParams = ['*'])
+    public function find(array $selectParams = ['*'])
     {
         $select = $this->getSelectParams($selectParams);
         $this->db->select($select)->from($this->getTableName());
@@ -96,6 +104,9 @@ class ActiveRecord extends Model
         return $this->db->one();
     }
 
+
+
+
     /**
      * Insert or update
      *
@@ -103,7 +114,31 @@ class ActiveRecord extends Model
      */
     public function save($validate = true)
     {
+        $class = new \ReflectionClass($this);
+        $tableName = $this->getTableName();
 
+        $propsToImplode = [];
+        foreach ($class->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
+            $propertyName = $property->getName();
+            $propsToImplode[] = '`' . $propertyName . '` = "' . $this->{$propertyName} . '"';
+        }
+
+        $setClause = implode(',', $propsToImplode);
+        $sqlQuery = '';
+
+        if ($this->id > 0) {
+            $sqlQuery = 'UPDATE `' . $tableName . '` SET ' . $setClause . ' WHERE id = ' . $this->id;
+        } else { // иначе  нам нужно вставить новый объект в бд
+            $sqlQuery = 'INSERT INTO `' . $tableName . '` SET ' . $setClause . ', id = ' . $this->id;
+        }
+
+        $result = self::$db->exec($sqlQuery);
+
+        if (self::$db->errorCode()) {
+            throw new \Exception(self::$db->errorInfo()[2]);
+        }
+
+        return $result;
     }
 
     /**
@@ -165,5 +200,11 @@ class ActiveRecord extends Model
             ? (new \ReflectionClass(get_called_class()))->getShortName()
             : $tableName;
         return $this->tableName;
+    }
+
+    protected static function morph(array $object)
+    {
+
+      // return $entity;
     }
 }

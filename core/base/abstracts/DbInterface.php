@@ -365,4 +365,13 @@ interface DbInterface
      * @return $this
      */
     public function rightJoin($table, $key, $subKey);
+
+    /**
+     * Get table fields
+     *
+     * @param string $tableName table name
+     *
+     * @return array
+     */
+    public function getFieldsName($tableName);
 }
